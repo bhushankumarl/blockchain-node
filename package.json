@@ -1,0 +1,42 @@
+{
+  "name": "node-js-sample",
+  "version": "1.0.0",
+  "description": "Sample Node Client",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "async": "2.6.0",
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "boom": "7.1.1",
+    "debug": "^3.1.0",
+    "ethereumjs-testrpc": "^6.0.3",
+    "express": "^4.16.2",
+    "lodash": "^4.17.4",
+    "moment": "^2.20.1",
+    "solc": "^0.4.23",
+    "truffle-hdwallet-provider": "0.0.3",
+    "vogels-promisified": "^2.2.4",
+    "web3": "^1.0.0-beta.34",
+    "web3-eth-accounts": "^1.0.0-beta.34"
+  },
+  "engines": {
+    "node": "7.x.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "jshint": "^2.8.0"
+  }
+}
