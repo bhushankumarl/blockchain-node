@@ -22,6 +22,7 @@ exports.getNetwork = function () {
 exports.createAccount = function () {
     return web3.eth.accounts.create();
 };
+
 exports.createAccountThirdParty = function () {
     return account.create();
 };
