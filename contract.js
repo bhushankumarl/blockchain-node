@@ -11,12 +11,19 @@ var execute = async function () {
         var isListen = await  web3Service.isListening();
         // console.log('isListen ', isListen);
 
-        var accounts = await  web3Service.getAccounts();
+        // var accounts = await  web3Service.getAccounts();
         // console.log('accounts ', accounts);
-        var address = '0x17ad813427f68F9E0f103766592C0BAb3d12B795';
 
-        var unlockAccount = await  web3Service.unlockAccountPersonalAccount(address, '123456789');
+        // Address created through web3.eth.personal.newAccount(password);
+        var address = '0x17ad813427f68F9E0f103766592C0BAb3d12B795';
+        var address = await web3Service.getCoinbase();
+
+        var balance = await  web3Service.getBalance(address);
+        console.log('balance ', balance.toString(10));
+
+        var unlockAccount = await  web3Service.unlockAccountPersonalCoinbaseAccount();
         console.log('unlockAccount ', address, unlockAccount);
+
 
         var compileContract = await web3Service.compileContract(source);
         // console.log('compileContract ', compileContract);
@@ -24,14 +31,10 @@ var execute = async function () {
         const ABI = JSON.parse(compileContract.contracts[':ProductInformation'].interface);
         // console.log('bytecode ', bytecode);
         // console.log('ABI ', ABI);
-        // console.log('compileContract', compileContract);
 
 
-        var options = {
-            gas: '10000000'
-        };
-        var deployedContract = await web3Service.deployContract(ABI, bytecode, address, options);
-
+        var deployedContract = await web3Service.sendResponse(ABI, bytecode, address, {});
+        // console.log('deployedContracts ', deployedContract);
         // web3Service.callContractFunction(ABI, address);
     } catch (Exception) {
         console.log('Exception ', Exception);

@@ -50,7 +50,7 @@ exports.getGasPrice = function () {
 
 exports.createAccountWithWallet = async function (password) {
     var newAccount = await web3.eth.accounts.create();
-    web3.eth.accounts.wallet.add(newAccount);
+    web3.eth.accounts.wallet.add(newAccount.privateKey);
     // web3.eth.accounts.wallet.save(password, password); // This method is not working
     return newAccount;
 };
@@ -83,6 +83,10 @@ exports.createPersonalAccount = function (password) {
 
 exports.unlockAccountPersonalAccount = function (address, password) {
     return web3.eth.personal.unlockAccount(address, password, 15000);
+};
+
+exports.unlockAccountPersonalCoinbaseAccount = async function () {
+    return web3.eth.personal.unlockAccount(await this.getCoinbase());
 };
 
 exports.defaultAccount = function () {
@@ -149,51 +153,88 @@ exports.trialOnly = async function () {
  * Contract Functions
  */
 
-exports.compileContract = async function (fileSource, contractName) {
+exports.compileContract = async function (fileSource) {
+    /* *
+     * Compile the contract using solc
+     * So, Let contracts method can be accessible.
+     */
     return solc.compile(fileSource, 1);
 };
 
-
 exports.getContractInstance = function (contractInterface, address, options) {
+    /* *
+     * Creates the instance of the Contract to be use for other methods
+     *
+     */
     try {
         var MyContract = new web3.eth.Contract(contractInterface, address, {
-            gas: 1500000,
-            gasPrice: '30000000000000',
+            gas: 135571,
+            gasPrice: '10000000',
             from: address
         });
         return MyContract;
     } catch (Exception) {
-        console.log('Exception ', Exception);
+        console.log('getContractInstance Exception ', Exception);
         process.exit(0);
     }
-
 };
 
+exports.sendResponse = async function (contractInterface, contractByteCode, address, options) {
+    /* *
+     * Trying to Deploy the Transaction
+     * So, Let contracts method can be accessible.
+     */
+    try {
+        var MyContract = this.getContractInstance(contractInterface, address);
+        var transactionContract = MyContract.deploy({
+            data: '0x' + contractByteCode,
+            arguments: []
+        });
+        console.log('Start sending contract');
+        transactionContract.send({
+            from: address,
+            gas: '184000',
+            gasPrice: '80000000'
+        }, function (error, transactionHash) {
+            console.log('error ', error);
+            console.log('transactionHash ', transactionHash);
+        }).on('error', function (error) {
+            console.log('error ', error);
+        }).on('transactionHash', function (transactionHash) {
+            console.log('transactionHash ', transactionHash);
+        }).on('receipt', function (receipt) {
+            console.log(receipt.contractAddress); // contains the new contract address
+        }).on('confirmation', function (confirmationNumber, receipt) {
+            console.log('confirmationNumber ', confirmationNumber);
+            console.log('receipt ', receipt);
+        }).then(function (newContractInstance) {
+            console.log('newContractInstance ', newContractInstance);
+            console.log(newContractInstance.options.address); // instance with the new contract address
+        });
+    } catch (Exception) {
+        console.log('sendResponse Exception ', Exception);
+        process.exit(0);
+    }
+};
+
+exports.callContractFunction = async function (contractABI, address) {
+    var MyContract = this.getContractInstance(contractABI, address);
+    return MyContract.methods.get().call();
+};
 
 exports.deployContract = async function (contractInterface, contractByteCode, address, options) {
     try {
         var MyContract = this.getContractInstance(contractInterface, address);
-        var deployedContract = MyContract.deploy({
-            data: '0x' + contractByteCode,
-            arguments: []
-        });
-        deployedContract.estimateGas((err, gas) => {
-            console.log('err ', err);
-            console.log(gas);
-        });
-        var sendResponse = await  deployedContract.send({
-            from: address,
-            gas: 100000000,
-            gasPrice: '30000000000000'
-        });
+        /* var deployedContract = MyContract.deploy({
+             data: '0x' + contractByteCode,
+             arguments: []
+         });*/
+
+        var sendResponse = await MyContract.methods.getData().call({from: address, gas: 135571});
+        console.log('sendResponse ', sendResponse);
         return sendResponse;
     } catch (Exception) {
-        console.log('Exception ', Exception);
+        console.log('deployContract Exception ', Exception);
         process.exit(0);
     }
-
-};
-exports.callContractFunction = async function (contractABI, address) {
-    var MyContract = this.getContractInstance(contractABI, address);
-    return MyContract.methods.get().call();
 };
