@@ -10,6 +10,7 @@ var account = new Web3EthAccounts(process.env.NETWORK_URL);
  *
  * Web3, Network Functions
  */
+var solc = require('solc');
 
 exports.isListening = function () {
     console.log('process.env.NETWORK_URL ', process.env.NETWORK_URL);
@@ -137,4 +138,23 @@ exports.sendTransaction = function (data) {
  */
 exports.trialOnly = async function () {
     web3.eth.getAccounts().then(console.log);
+};
+
+exports.compileContract = async function (fileSource, contractName) {
+    return solc.compile(fileSource, 1).contracts[':' + contractName];
+};
+
+exports.deployContract = async function (contractInterface, contractByteCode, address, options) {
+    var MyContract = await new web3.eth.Contract(JSON.parse(contractInterface), address, {
+        gas: options.gas || '1000000',
+        from: address
+    });
+    return MyContract.deploy({
+        data: contractByteCode,
+        arguments: ['fg', 'My String']
+    });
+};
+exports.callContractFunction = async function (contractABI, address) {
+    var MyContract = await new web3.eth.Contract(contractABI, address);
+    return MyContract.methods.get().call();
 };
