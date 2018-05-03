@@ -6,7 +6,6 @@ npm install
 
 ### Export variables
 ```
-export DEBUG=BLOCKCHAIN:*
 export NETWORK_URL=http://localhost:8545
 export NETWORK_URL=http://192.168.1.104:8545
 ```

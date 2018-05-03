@@ -1,5 +1,7 @@
 var Web3 = require('web3');
 var web3 = new Web3(new Web3.providers.HttpProvider(process.env.NETWORK_URL));
+console.log('process.env.NETWORK_URL ', process.env.NETWORK_URL);
+
 
 var Web3EthAccounts = require('web3-eth-accounts');
 var account = new Web3EthAccounts(process.env.NETWORK_URL);
@@ -15,7 +17,6 @@ exports.isListening = function () {
 };
 
 exports.isSyncing = function () {
-    console.log('process.env.NETWORK_URL ', process.env.NETWORK_URL);
     return web3.eth.isSyncing();
 };
 
@@ -66,7 +67,7 @@ exports.register = function (accountAddress) {
 exports.createAccount = function () {
     /* *
      * Create Account Local Machine Only.
-     * It will not return in web3.eth.getAccounts(); call
+     * It will NOT show accounts in web3.eth.getAccounts(); call
      */
     return web3.eth.accounts.create();
 };
@@ -74,7 +75,7 @@ exports.createAccount = function () {
 exports.createPersonalAccount = function (password) {
     /* *
      * Create Account in Node.
-     * web3.eth.getAccounts();
+     * It will SHOW accounts in web3.eth.getAccounts(); call
      */
     return web3.eth.personal.newAccount(password);
 };
