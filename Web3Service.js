@@ -4,6 +4,8 @@ var web3 = new Web3(new Web3.providers.HttpProvider(process.env.NETWORK_URL));
 var Web3EthAccounts = require('web3-eth-accounts');
 var account = new Web3EthAccounts(process.env.NETWORK_URL);
 
+var solc = require('solc');
+
 exports.isListening = function () {
     console.log('process.env.NETWORK_URL ', process.env.NETWORK_URL);
     return web3.eth.net.isListening();
@@ -81,4 +83,23 @@ exports.getGasPrice = function () {
 
 exports.trialOnly = async function () {
     web3.eth.getAccounts().then(console.log);
+};
+
+exports.compileContract = async function (fileSource, contractName) {
+    return solc.compile(fileSource, 1).contracts[':' + contractName];
+};
+
+exports.deployContract = async function (contractInterface, contractByteCode, address, options) {
+    var MyContract = await new web3.eth.Contract(JSON.parse(contractInterface), address, {
+        gas: options.gas || '1000000',
+        from: address
+    });
+    return MyContract.deploy({
+        data: contractByteCode,
+        arguments: ['fg', 'My String']
+    });
+};
+exports.callContractFunction = async function (contractABI, address) {
+    var MyContract = await new web3.eth.Contract(contractABI, address);
+    return MyContract.methods.get().call();
 };
