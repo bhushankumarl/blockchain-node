@@ -81,6 +81,10 @@ exports.createPersonalAccount = function (password) {
     return web3.eth.personal.newAccount(password);
 };
 
+exports.unlockAccountPersonalAccount = function (address, password) {
+    return web3.eth.personal.unlockAccount(address, password, 15000);
+};
+
 exports.defaultAccount = function () {
     return web3.eth.defaultAccount;
 };
@@ -140,21 +144,56 @@ exports.trialOnly = async function () {
     web3.eth.getAccounts().then(console.log);
 };
 
+/**
+ *
+ * Contract Functions
+ */
+
 exports.compileContract = async function (fileSource, contractName) {
-    return solc.compile(fileSource, 1).contracts[':' + contractName];
+    return solc.compile(fileSource, 1);
 };
 
+
+exports.getContractInstance = function (contractInterface, address, options) {
+    try {
+        var MyContract = new web3.eth.Contract(contractInterface, address, {
+            gas: 1500000,
+            gasPrice: '30000000000000',
+            from: address
+        });
+        return MyContract;
+    } catch (Exception) {
+        console.log('Exception ', Exception);
+        process.exit(0);
+    }
+
+};
+
+
 exports.deployContract = async function (contractInterface, contractByteCode, address, options) {
-    var MyContract = await new web3.eth.Contract(JSON.parse(contractInterface), address, {
-        gas: options.gas || '1000000',
-        from: address
-    });
-    return MyContract.deploy({
-        data: contractByteCode,
-        arguments: ['fg', 'My String']
-    });
+    try {
+        var MyContract = this.getContractInstance(contractInterface, address);
+        var deployedContract = MyContract.deploy({
+            data: '0x' + contractByteCode,
+            arguments: []
+        });
+        deployedContract.estimateGas((err, gas) => {
+            console.log('err ', err);
+            console.log(gas);
+        });
+        var sendResponse = await  deployedContract.send({
+            from: address,
+            gas: 100000000,
+            gasPrice: '30000000000000'
+        });
+        return sendResponse;
+    } catch (Exception) {
+        console.log('Exception ', Exception);
+        process.exit(0);
+    }
+
 };
 exports.callContractFunction = async function (contractABI, address) {
-    var MyContract = await new web3.eth.Contract(contractABI, address);
+    var MyContract = this.getContractInstance(contractABI, address);
     return MyContract.methods.get().call();
 };
