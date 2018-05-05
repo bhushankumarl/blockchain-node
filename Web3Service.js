@@ -210,6 +210,8 @@ exports.sendResponse = async function (contractInterface, contractByteCode, addr
         }).then(function (newContractInstance) {
             console.log('newContractInstance ', newContractInstance);
             console.log(newContractInstance.options.address); // instance with the new contract address
+        }).catch(function (error) {
+            console.log('error ', error);
         });
     } catch (Exception) {
         console.log('sendResponse Exception ', Exception);
