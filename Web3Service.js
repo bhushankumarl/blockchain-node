@@ -12,6 +12,9 @@ var account = new Web3EthAccounts(process.env.NETWORK_URL);
  */
 var solc = require('solc');
 
+var DEFAULT_GAS = 150000;
+var DEFAULT_GAS_PRICE = '1';
+
 exports.isListening = function () {
     console.log('process.env.NETWORK_URL ', process.env.NETWORK_URL);
     return web3.eth.net.isListening();
@@ -81,8 +84,8 @@ exports.createPersonalAccount = function (password) {
     return web3.eth.personal.newAccount(password);
 };
 
-exports.unlockAccountPersonalAccount = function (address, password) {
-    return web3.eth.personal.unlockAccount(address, password, 15000);
+exports.unlockAccountPersonalAccount = function (accountAddress, password) {
+    return web3.eth.personal.unlockAccount(accountAddress, password, 15000);
 };
 
 exports.unlockAccountPersonalCoinbaseAccount = async function () {
@@ -139,6 +142,10 @@ exports.sendTransaction = function (data) {
     return web3.eth.sendTransaction(data);
 };
 
+exports.getTransactionReceipt = function (transactionHash) {
+    return web3.eth.getTransactionReceipt(transactionHash);
+};
+
 
 /**
  *
@@ -161,82 +168,115 @@ exports.compileContract = async function (fileSource) {
     return solc.compile(fileSource, 1);
 };
 
-exports.getContractInstance = function (contractInterface, address, options) {
+exports.getContractInstance = function (contractInterface, accountAddress, options) {
     /* *
      * Creates the instance of the Contract to be use for other methods
      *
      */
     try {
-        var MyContract = new web3.eth.Contract(contractInterface, address, {
-            gas: 135571,
-            gasPrice: '10000000',
-            from: address
+        var myContractInstance = new web3.eth.Contract(contractInterface, {
+            gas: DEFAULT_GAS,
+            gasPrice: DEFAULT_GAS_PRICE,
+            from: accountAddress
         });
-        return MyContract;
+        return myContractInstance;
     } catch (Exception) {
         console.log('getContractInstance Exception ', Exception);
         process.exit(0);
     }
 };
 
-exports.sendResponse = async function (contractInterface, contractByteCode, address, options) {
+exports.getRemoteContractInstance = function (contractInterface, contractAddress, options) {
     /* *
-     * Trying to Deploy the Transaction
-     * So, Let contracts method can be accessible.
+     * Creates the instance of the Remote Contract to be use for other methods
+     * It will only executes if contract already deployed
      */
     try {
-        var MyContract = this.getContractInstance(contractInterface, address);
-        var transactionContract = MyContract.deploy({
-            data: '0x' + contractByteCode,
-            arguments: []
-        });
-        console.log('Start sending contract');
-        transactionContract.send({
-            from: address,
-            gas: '184000',
-            gasPrice: '80000000'
-        }, function (error, transactionHash) {
-            console.log('error ', error);
-            console.log('transactionHash ', transactionHash);
-        }).on('error', function (error) {
-            console.log('error ', error);
-        }).on('transactionHash', function (transactionHash) {
-            console.log('transactionHash ', transactionHash);
-        }).on('receipt', function (receipt) {
-            console.log(receipt.contractAddress); // contains the new contract address
-        }).on('confirmation', function (confirmationNumber, receipt) {
-            console.log('confirmationNumber ', confirmationNumber);
-            console.log('receipt ', receipt);
-        }).then(function (newContractInstance) {
-            console.log('newContractInstance ', newContractInstance);
-            console.log(newContractInstance.options.address); // instance with the new contract address
-        }).catch(function (error) {
-            console.log('error ', error);
-        });
+        var myRemoteContractInstance = new web3.eth.Contract(contractInterface, contractAddress);
+        return myRemoteContractInstance;
     } catch (Exception) {
-        console.log('sendResponse Exception ', Exception);
+        console.log('getRemoteContractInstance Exception ', Exception);
         process.exit(0);
     }
 };
 
-exports.callContractFunction = async function (contractABI, address) {
-    var MyContract = this.getContractInstance(contractABI, address);
-    return MyContract.methods.get().call();
+exports.deployContract = async function (contractInterface, contractByteCode, accountAddress, options) {
+    /* *
+    * Trying to Deploy the Transaction
+    * So, Let contracts method can be accessible.
+    */
+    return new Promise(async (resolve, reject) => {
+        try {
+            var myContractInstance = this.getContractInstance(contractInterface, accountAddress, options);
+
+            /**
+             * Their is no need to provide gas, gasPrice
+             */
+            var transactionContract = myContractInstance.deploy({
+                data: '0x' + contractByteCode,
+                arguments: []
+            });
+            console.log('Start sending contract');
+            transactionContract.send({}, function (error, transactionHash) {
+                if (error) {
+                    console.log('deployContract error ', error);
+                    return reject(error);
+                }
+                console.log('You should wait until the transaction get mined');
+                // console.log('transactionHash ', transactionHash);
+                return resolve(transactionHash);
+            }).on('error', function (error) {
+                console.log('deployContract error ', error);
+                process.exit(0);
+            }).on('transactionHash', function (transactionHash) {
+                console.log('deployContract transactionHash ', transactionHash);
+            }).on('receipt', function (receipt) {
+                // console.log('deployContract has been mined. receipt ', receipt); // contains the new contract address
+                // console.log(' deployContract receipt.contractAddress ', receipt.contractAddress); // contains the new contract address
+            }).on('confirmation', function (confirmationNumber, receipt) {
+                // console.log('confirmationNumber ', confirmationNumber);
+                // console.log('receipt ', receipt);
+            }).then(async (newContractInstance) => {
+                // console.log('newContractInstance ', newContractInstance);
+                // console.log(newContractInstance.options.address); // instance with the new contract address
+            });
+        } catch (Exception) {
+            console.log('deployContract Exception ', Exception);
+            return reject(Exception);
+        }
+    });
 };
 
-exports.deployContract = async function (contractInterface, contractByteCode, address, options) {
+exports.getData = async function (contractInterface, contractAddress, options) {
     try {
-        var MyContract = this.getContractInstance(contractInterface, address);
-        /* var deployedContract = MyContract.deploy({
-             data: '0x' + contractByteCode,
-             arguments: []
-         });*/
-
-        var sendResponse = await MyContract.methods.getData().call({from: address, gas: 135571});
+        console.log('contractAddress ', contractAddress);
+        var myContractInstance = this.getRemoteContractInstance(contractInterface, contractAddress, options);
+        var sendResponse = await myContractInstance.methods.getData().call();
         console.log('sendResponse ', sendResponse);
         return sendResponse;
     } catch (Exception) {
-        console.log('deployContract Exception ', Exception);
+        console.log('getData Exception ', Exception);
         process.exit(0);
     }
+};
+
+exports.waitBlockToBeMine = async function (transactionHash) {
+    return new Promise((resolve, reject) => {
+        var clearIntervalId = setInterval(async () => {
+            try {
+                var receipt = await this.getTransactionReceipt(transactionHash);
+                if (receipt && receipt.contractAddress) {
+                    console.log('Your contract has been deployed at ' + receipt.contractAddress);
+                    console.log('Note that it might take 30 - 90 sceonds for the block to propagate befor it\'s visible in etherscan.io');
+                    clearInterval(clearIntervalId);
+                    resolve(receipt);
+                } else {
+                    console.log('Waiting a mined block to include your contract... currently in block ');
+                }
+            } catch (Exception) {
+                console.log('waitBlock Exception ', Exception);
+                reject(Exception);
+            }
+        }, 4000);
+    });
 };
