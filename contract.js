@@ -26,7 +26,7 @@ var execute = async function () {
 
 
         var compileContract = await web3Service.compileContract(source);
-        // console.log('compileContract ', compileContract);
+         console.log('compileContract ', compileContract);
         const bytecode = compileContract.contracts[':ProductInformation'].bytecode;
         const ABI = JSON.parse(compileContract.contracts[':ProductInformation'].interface);
         // console.log('bytecode ', bytecode);
