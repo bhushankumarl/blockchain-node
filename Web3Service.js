@@ -12,7 +12,7 @@ var account = new Web3EthAccounts(process.env.NETWORK_URL);
  */
 var solc = require('solc');
 
-var DEFAULT_GAS = 150000;
+var DEFAULT_GAS = 250000;
 var DEFAULT_GAS_PRICE = '1';
 
 exports.isListening = function () {
@@ -254,6 +254,33 @@ exports.getData = async function (contractInterface, contractAddress, options) {
         var sendResponse = await myContractInstance.methods.getData().call();
         console.log('sendResponse ', sendResponse);
         return sendResponse;
+    } catch (Exception) {
+        console.log('getData Exception ', Exception);
+        process.exit(0);
+    }
+};
+
+exports.getMultiContractData = async function (contractInterface, contractAddress, accountAdress, options) {
+    try {
+        console.log('contractAddress ', contractAddress);
+        console.log('contractInterface ', contractInterface);
+        var myContractInstance = this.getRemoteContractInstance(contractInterface, contractAddress, options);
+        // var sendResponse = await myContractInstance.methods.getData().call();
+        //console.log('sendResponse ', sendResponse);
+        /*var sendF1Response = await myContractInstance.methods.sendCoin('hhhhhii').send({
+            from: accountAdress,
+            gas: DEFAULT_GAS,
+            gasPrice: DEFAULT_GAS_PRICE,
+        });*/
+
+        var sendF1Response = await myContractInstance.methods.sendCoin().call();
+        /*var finalResponse = {
+            sendResponse: sendResponse,
+            sendF1Response: sendF1Response
+        };*/
+
+        console.log('sendF1Response ', sendF1Response);
+        return sendF1Response;
     } catch (Exception) {
         console.log('getData Exception ', Exception);
         process.exit(0);
