@@ -7,7 +7,7 @@ npm install
 ### Export variables
 ```
 export NETWORK_URL=http://localhost:8545
-export NETWORK_URL=http://192.168.1.105:8545
+export NETWORK_URL=http://192.168.1.112:8545
 ```
 
 ### Using Docker Install Ethereum
