@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 
-var inboxPath = path.resolve(__dirname, 'files', 'contracts', 'sharing.sol');
+var inboxPath = path.resolve(__dirname, 'files', 'contracts', 'multiContractTest.sol');
 var source = fs.readFileSync(inboxPath, 'utf8');
 
 var web3Service = require('./Web3Service');
@@ -27,8 +27,8 @@ var execute = async function () {
 
         var compileContract = await web3Service.compileContract(source);
         // console.log('compileContract ', compileContract);
-        const bytecode = compileContract.contracts[':ProductInformation'].bytecode;
-        const ABI = JSON.parse(compileContract.contracts[':ProductInformation'].interface);
+        const bytecode = compileContract.contracts[':coinCaller'].bytecode;
+        const ABI = JSON.parse(compileContract.contracts[':coinCaller'].interface);
         // console.log('bytecode ', bytecode);
         // console.log('ABI ', ABI);
 
@@ -36,7 +36,8 @@ var execute = async function () {
         var transactionHash = await web3Service.deployContract(ABI, bytecode, accountAdress, {});
         var receipt = await web3Service.waitBlockToBeMine(transactionHash);
         console.log('receipt ', receipt);
-        var data = await web3Service.getData(ABI, receipt.contractAddress, {});
+       // var data = await web3Service.getData(ABI, receipt.contractAddress, {});
+        var data = await web3Service.getMultiContractData(ABI, receipt.contractAddress,accountAdress, {});
         console.log('data ', data);
     } catch (Exception) {
         console.log('Exception ', Exception);
