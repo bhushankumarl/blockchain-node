@@ -267,7 +267,7 @@ exports.waitBlockToBeMine = async function (transactionHash) {
                 var receipt = await this.getTransactionReceipt(transactionHash);
                 if (receipt && receipt.contractAddress) {
                     console.log('Your contract has been deployed at ' + receipt.contractAddress);
-                    console.log('Note that it might take 30 - 90 sceonds for the block to propagate befor it\'s visible in etherscan.io');
+                    console.log('Note that it might take 30 - 90 seconds for the block to propagate before it\'s visible in etherscan.io');
                     clearInterval(clearIntervalId);
                     resolve(receipt);
                 } else {
