@@ -12,7 +12,7 @@ var account = new Web3EthAccounts(process.env.NETWORK_URL);
  */
 var solc = require('solc');
 
-var DEFAULT_GAS = 250000;
+var DEFAULT_GAS = 210000;
 var DEFAULT_GAS_PRICE = '1';
 
 exports.isListening = function () {
@@ -36,6 +36,10 @@ exports.getNetwork = function () {
 
 exports.getBlockNumber = function () {
     return web3.eth.getBlockNumber();
+};
+
+exports.getBlock = function (value) {
+    return web3.eth.getBlock(value);
 };
 
 exports.getStorageAt = function (accountAddress) {
@@ -168,12 +172,19 @@ exports.compileContract = async function (fileSource) {
     return solc.compile(fileSource, 1);
 };
 
-exports.getContractInstance = function (contractInterface, accountAddress, options) {
+exports.getContractInstance = async function (contractInterface, accountAddress, options) {
     /* *
      * Creates the instance of the Contract to be use for other methods
-     *
      */
     try {
+        var latestBlock = await this.getBlock('latest');
+        console.log('latestBlock.gasLimit ', latestBlock.gasLimit);
+        // console.log('latestBlock.gasLimit ', latestBlock);
+        var gas = DEFAULT_GAS;
+        if (latestBlock.gasLimit > gas) {
+            gas = latestBlock.gasLimit;
+        }
+        console.log('gas ', gas);
         var myContractInstance = new web3.eth.Contract(contractInterface, {
             gas: DEFAULT_GAS,
             gasPrice: DEFAULT_GAS_PRICE,
@@ -207,8 +218,7 @@ exports.deployContract = async function (contractInterface, contractByteCode, ac
     */
     return new Promise(async (resolve, reject) => {
         try {
-            var myContractInstance = this.getContractInstance(contractInterface, accountAddress, options);
-
+            var myContractInstance = await this.getContractInstance(contractInterface, accountAddress, options);
             /**
              * Their is no need to provide gas, gasPrice
              */
@@ -298,7 +308,8 @@ exports.waitBlockToBeMine = async function (transactionHash) {
                     clearInterval(clearIntervalId);
                     resolve(receipt);
                 } else {
-                    console.log('Waiting a mined block to include your contract... currently in block ');
+                    var latestBlock = await this.getBlock('latest');
+                    console.log('Waiting a mined block to include your contract... currently in block ', latestBlock.hash);
                 }
             } catch (Exception) {
                 console.log('waitBlock Exception ', Exception);

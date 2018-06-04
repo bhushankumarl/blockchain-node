@@ -44,6 +44,9 @@ var execute = async function () {
         var accounts = await  web3Service.getAccounts();
         console.log('accounts ', accounts);
         console.log('total accounts ', accounts.length);
+        
+        var latestBlock = await web3Service.getBlock('latest');
+        console.log('latest Block ', latestBlock);
 
         /*var accounts = await  web3Service.trialOnly();
         console.log('accounts ', accounts);*/

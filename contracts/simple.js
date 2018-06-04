@@ -1,10 +1,10 @@
 var path = require('path');
 var fs = require('fs');
 
-var inboxPath = path.resolve(__dirname, 'files', 'contracts', 'multiContractTest.sol');
-var source = fs.readFileSync(inboxPath, 'utf8');
+var contractPath = path.resolve(__dirname, '..', 'files', 'contracts', 'simple.sol');
+var source = fs.readFileSync(contractPath, 'utf8');
 
-var web3Service = require('./Web3Service');
+var web3Service = require('../Web3Service');
 
 var execute = async function () {
     try {
@@ -21,14 +21,17 @@ var execute = async function () {
         var balance = await  web3Service.getBalance(accountAdress);
         console.log('balance ', balance.toString(10));
 
+       /* var latestBlock = await web3Service.getBlock('latest');
+        console.log('latest Block ', latestBlock);*/
+
         var unlockAccount = await  web3Service.unlockAccountPersonalCoinbaseAccount();
         console.log('unlockAccount ', accountAdress, unlockAccount);
 
 
         var compileContract = await web3Service.compileContract(source);
         // console.log('compileContract ', compileContract);
-        const bytecode = compileContract.contracts[':coinCaller'].bytecode;
-        const ABI = JSON.parse(compileContract.contracts[':coinCaller'].interface);
+        const bytecode = compileContract.contracts[':SimpleInformation'].bytecode;
+        const ABI = JSON.parse(compileContract.contracts[':SimpleInformation'].interface);
         // console.log('bytecode ', bytecode);
         // console.log('ABI ', ABI);
 
@@ -36,8 +39,8 @@ var execute = async function () {
         var transactionHash = await web3Service.deployContract(ABI, bytecode, accountAdress, {});
         var receipt = await web3Service.waitBlockToBeMine(transactionHash);
         console.log('receipt ', receipt);
-       // var data = await web3Service.getData(ABI, receipt.contractAddress, {});
-        var data = await web3Service.getMultiContractData(ABI, receipt.contractAddress,accountAdress, {});
+        // var data = await web3Service.getData(ABI, receipt.contractAddress, {});
+        var data = await web3Service.getMultiContractData(ABI, receipt.contractAddress, accountAdress, {});
         console.log('data ', data);
     } catch (Exception) {
         console.log('Exception ', Exception);
